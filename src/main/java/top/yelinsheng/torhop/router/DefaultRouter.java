@@ -58,7 +58,7 @@ public class DefaultRouter extends Router {
                                     ChannelPipeline pipeline = ch.pipeline();
                                     pipeline.addLast("codec", new HttpServerCodec());
                                     pipeline.addLast("aggregator", new HttpObjectAggregator(6553600));
-                                    pipeline.addLast("handler", new DefaultRouterServerHandler(nextHopAddress));
+                                    pipeline.addLast("handler", new DefaultRouterServerHandler(nextHopAddress, proxyAddress));
                                 }});
                     ChannelFuture future = bootstrap.bind(proxyAddress.getPort()).sync();
                     future.channel().closeFuture().sync();

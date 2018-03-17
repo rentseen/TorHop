@@ -2,8 +2,6 @@ package top.yelinsheng.torhop.handler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.apache.logging.log4j.LogManager;
@@ -32,9 +30,13 @@ public class RegisterHandler extends ChannelInboundHandlerAdapter {
         if(msg instanceof String) {
             String hostPath = (String) msg;
             String[] tmp = hostPath.split(":");
-            if(tmp[0].equals("hostPath")) {
-                Address address = new Address(tmp[1], Integer.parseInt(tmp[2]));
+            if(tmp[0].equals("nextHop")) {
+                Address address = null;
+                if(!tmp[1].equals("null")) {
+                    address = new Address(tmp[1], Integer.parseInt(tmp[2]));
+                }
                 router.setNextHop(address);
+                logger.error(router.getProxyAddress()+" next hop: " + address);
             }
         }
     }

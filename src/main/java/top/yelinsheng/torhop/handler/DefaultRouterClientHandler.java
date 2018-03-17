@@ -2,19 +2,31 @@ package top.yelinsheng.torhop.handler;
 
 import io.netty.channel.*;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaders;
+import top.yelinsheng.torhop.utils.Address;
 
-public class DefaultProxyClientHandler extends ChannelInboundHandlerAdapter {
+public class DefaultRouterClientHandler extends ChannelInboundHandlerAdapter {
     private Channel clientChannel;
+    private final Address proxyAddress;
 
-    public DefaultProxyClientHandler(Channel clientChannel) {
+    public DefaultRouterClientHandler(Channel clientChannel, Address proxyAddress) {
         this.clientChannel = clientChannel;
+        this.proxyAddress = proxyAddress;
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         FullHttpResponse response = (FullHttpResponse) msg;
         //修改http响应体返回至客户端
-        response.headers().add("torhop-tag","torhop");
+
+        HttpHeaders httpHeaders = response.headers();
+        if(httpHeaders.contains("torhop-tag")) {
+            String s = httpHeaders.get("torhop-tag");
+            httpHeaders.set("torhop-tag", s+"<-"+proxyAddress.toString());
+        }
+        else {
+            httpHeaders.add("torhop-tag", proxyAddress.toString());
+        }
         final ChannelFuture cf = clientChannel.writeAndFlush(msg);
         cf.addListener(ChannelFutureListener.CLOSE);
     }

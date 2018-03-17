@@ -8,8 +8,10 @@ import top.yelinsheng.torhop.utils.Address;
 
 public class DefaultRouterServerHandler extends ChannelInboundHandlerAdapter {
     private Address nextHopAddress;
-    public DefaultRouterServerHandler(Address nextHopAddress) {
+    private final Address proxyAddress;
+    public DefaultRouterServerHandler(Address nextHopAddress, Address proxyAddress) {
         this.nextHopAddress = nextHopAddress;
+        this.proxyAddress = proxyAddress;
     }
 
     @Override
@@ -46,7 +48,7 @@ public class DefaultRouterServerHandler extends ChannelInboundHandlerAdapter {
                         public void initChannel(SocketChannel ch) throws Exception {
                             ch.pipeline().addLast(new HttpClientCodec());
                             ch.pipeline().addLast(new HttpObjectAggregator(6553600));
-                            ch.pipeline().addLast(new DefaultProxyClientHandler(ctx.channel()));
+                            ch.pipeline().addLast(new DefaultRouterClientHandler(ctx.channel(), proxyAddress));
                         }
                     });
 

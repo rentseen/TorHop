@@ -1,6 +1,8 @@
 package top.yelinsheng.torhop.proxy;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -15,21 +17,23 @@ import top.yelinsheng.torhop.handler.LeaderServiceHandler;
 import top.yelinsheng.torhop.utils.Address;
 import top.yelinsheng.torhop.router.Router;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Leader extends Slave {
     public static final Logger logger = LogManager.getLogger("Leader");
     private List<Address> slaveList;
     private Map<Address, ChannelHandlerContext> slaveChannelMap;
+    private List<Address> gateWayList;
+    private Map<Address, ChannelHandlerContext> gateWayChannelMap;
     public Leader(Router router) {
         super(router);
         slaveList = new ArrayList<Address>();
         slaveChannelMap = new HashMap<Address, ChannelHandlerContext>();
+        gateWayList = new ArrayList<Address>();
+        gateWayChannelMap = new HashMap<Address, ChannelHandlerContext>();
     }
     public void startLeaderService() {
+        final Leader leader = this;
         new Thread() {
             public void run() {
                 EventLoopGroup bossGroup = new NioEventLoopGroup();
@@ -48,7 +52,7 @@ public class Leader extends Slave {
                                     //解决粘包问题
                                     pipeline.addLast(new LineBasedFrameDecoder(1024));
                                     pipeline.addLast(new StringDecoder());
-                                    pipeline.addLast("handler", new LeaderServiceHandler());
+                                    pipeline.addLast("handler", new LeaderServiceHandler(leader));
                                 }});
                     ChannelFuture future = bootstrap.bind(router.getLeaderAddress().getPort()).sync();
                     future.channel().closeFuture().sync();
@@ -62,14 +66,49 @@ public class Leader extends Slave {
             }
         }.start();
     }
-    public synchronized void addSlave(Address address, ChannelHandlerContext channel) {
+    public synchronized void addSlave(Address address, ChannelHandlerContext ctx) {
         slaveList.add(address);
-        slaveChannelMap.put(address, channel);
-        logger.error(slaveList);
+        slaveChannelMap.put(address, ctx);
+        generateRoute();
     }
     public synchronized void removeSlave(Address address) {
         slaveList.remove(address);
         slaveChannelMap.remove(address);
-        logger.error(slaveList);
+        generateRoute();
+    }
+    public synchronized void addGateWay(Address address, ChannelHandlerContext ctx) {
+        gateWayList.add(address);
+        gateWayChannelMap.put(address, ctx);
+        if(slaveList.size()>0) {
+            Address headAddress = slaveList.get(0);
+            String msg = "nextHop:"+headAddress+"\n";
+            ByteBuf encoded = Unpooled.copiedBuffer(msg.getBytes());
+            ctx.writeAndFlush(encoded);
+        }
+        logger.error("gateWay list: " + gateWayList);
+    }
+    public synchronized void removeGateWay(Address address) {
+        gateWayList.remove(address);
+        gateWayChannelMap.remove(address);
+        logger.error("gateWay list: " + gateWayList);
+    }
+    public synchronized void generateRoute() {
+        Collections.shuffle(slaveList);
+        logger.error("slave list after shuffle: " + slaveList);
+        for(int i=0; i<slaveList.size()-1; i++) {
+            ChannelHandlerContext ctx = slaveChannelMap.get(slaveList.get(i));
+            String msg = "nextHop:"+slaveList.get(i+1)+"\n";
+            ByteBuf encoded = Unpooled.copiedBuffer(msg.getBytes());
+            ctx.writeAndFlush(encoded);
+        }
+        slaveChannelMap.get(slaveList.get(slaveList.size()-1)).
+                writeAndFlush(Unpooled.copiedBuffer("nextHop:null:null\n".getBytes()));
+        Address headAddress = slaveList.get(0);
+        for(int i=0; i<gateWayList.size(); i++) {
+            ChannelHandlerContext ctx = gateWayChannelMap.get(gateWayList.get(i));
+            String msg = "nextHop:"+headAddress+"\n";
+            ByteBuf encoded = Unpooled.copiedBuffer(msg.getBytes());
+            ctx.writeAndFlush(encoded);
+        }
     }
 }

@@ -6,10 +6,16 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import top.yelinsheng.torhop.proxy.Leader;
 import top.yelinsheng.torhop.utils.Address;
 
 public class LeaderServiceHandler extends ChannelInboundHandlerAdapter {
     public static final Logger logger = LogManager.getLogger("LeaderServiceHandler");
+    Leader leader;
+
+    public LeaderServiceHandler(Leader leader) {
+        this.leader = leader;
+    }
 
     //接收leader的更新数据
     @Override
@@ -21,6 +27,13 @@ public class LeaderServiceHandler extends ChannelInboundHandlerAdapter {
             if(tmp[0].equals("register")) {
                 String role = tmp[1];
                 Address address = new Address(tmp[2], Integer.parseInt(tmp[3]));
+                if(role.equals("gateWay")) {
+                    leader.addGateWay(address, ctx);
+                }
+                else if(role.equals("slave")) {
+                    leader.addSlave(address, ctx);
+                }
+
             }
         }
     }
