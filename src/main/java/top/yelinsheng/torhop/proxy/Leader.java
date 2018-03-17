@@ -14,6 +14,7 @@ import io.netty.handler.logging.LoggingHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import top.yelinsheng.torhop.handler.LeaderServiceHandler;
+import top.yelinsheng.torhop.router.DefaultRouter;
 import top.yelinsheng.torhop.utils.Address;
 import top.yelinsheng.torhop.router.Router;
 
@@ -76,6 +77,19 @@ public class Leader extends Slave {
         slaveChannelMap.remove(address);
         generateRoute();
     }
+    public synchronized void removeSlave(ChannelHandlerContext ctx) {
+        Iterator<Map.Entry<Address, ChannelHandlerContext>> iterator = slaveChannelMap.entrySet().iterator();
+        while(iterator.hasNext()) {
+            Map.Entry<Address, ChannelHandlerContext> entry = iterator.next();
+            if(entry.getValue()==ctx) {
+                Address address = entry.getKey();
+                iterator.remove();
+                slaveList.remove(address);
+                generateRoute();
+                break;
+            }
+        }
+    }
     public synchronized void addGateWay(Address address, ChannelHandlerContext ctx) {
         gateWayList.add(address);
         gateWayChannelMap.put(address, ctx);
@@ -91,6 +105,19 @@ public class Leader extends Slave {
         gateWayList.remove(address);
         gateWayChannelMap.remove(address);
         logger.error("gateWay list: " + gateWayList);
+    }
+    public synchronized void removeGateWay(ChannelHandlerContext ctx) {
+        Iterator<Map.Entry<Address, ChannelHandlerContext>> iterator = gateWayChannelMap.entrySet().iterator();
+        while(iterator.hasNext()) {
+            Map.Entry<Address, ChannelHandlerContext> entry = iterator.next();
+            if(entry.getValue()==ctx) {
+                Address address = entry.getKey();
+                iterator.remove();
+                gateWayList.remove(address);
+                logger.error("gateWay list: " + gateWayList);
+                break;
+            }
+        }
     }
     public synchronized void generateRoute() {
         Collections.shuffle(slaveList);
@@ -110,5 +137,14 @@ public class Leader extends Slave {
             ByteBuf encoded = Unpooled.copiedBuffer(msg.getBytes());
             ctx.writeAndFlush(encoded);
         }
+    }
+
+    public static void main(String[] args) {
+        final Address leaderAddress = new Address("127.0.0.1", 7000);
+        final Address slave4ProxyAddress = new Address("127.0.0.1", 9004);
+        Router leaderRouter = new DefaultRouter(slave4ProxyAddress, null, leaderAddress, "slave");
+        Leader leader = new Leader(leaderRouter);
+        leader.startLeaderService();
+        leader.startProxyService();
     }
 }

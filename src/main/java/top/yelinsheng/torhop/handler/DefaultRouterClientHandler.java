@@ -22,7 +22,7 @@ public class DefaultRouterClientHandler extends ChannelInboundHandlerAdapter {
         HttpHeaders httpHeaders = response.headers();
         if(httpHeaders.contains("torhop-tag")) {
             String s = httpHeaders.get("torhop-tag");
-            httpHeaders.set("torhop-tag", s+"<-"+proxyAddress.toString());
+            httpHeaders.set("torhop-tag", proxyAddress.toString() + "->" + s);
         }
         else {
             httpHeaders.add("torhop-tag", proxyAddress.toString());

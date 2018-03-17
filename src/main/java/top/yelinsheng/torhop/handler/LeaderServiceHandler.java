@@ -17,6 +17,11 @@ public class LeaderServiceHandler extends ChannelInboundHandlerAdapter {
         this.leader = leader;
     }
 
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        leader.removeSlave(ctx);
+        leader.removeGateWay(ctx);
+    }
+
     //接收leader的更新数据
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
