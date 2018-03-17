@@ -22,11 +22,11 @@ public class DefaultRouterServerHandler extends ChannelInboundHandlerAdapter {
             if (nextHopAddress == null) {
                 //此节点为出口
 
-                String[] temp = request.headers().get("host").split(":");
-                host = temp[0];
+                String[] tmp = request.headers().get("host").split(":");
+                host = tmp[0];
                 port = 80;
-                if (temp.length > 1) {
-                    port = Integer.parseInt(temp[1]);
+                if (tmp.length > 1) {
+                    port = Integer.parseInt(tmp[1]);
                 } else {
                     if (request.uri().indexOf("https") == 0) {
                         port = 443;
@@ -38,6 +38,7 @@ public class DefaultRouterServerHandler extends ChannelInboundHandlerAdapter {
             }
 
             Bootstrap bootstrap = new Bootstrap();
+            //使用现有的eventloop避免创建线程池的资源消耗
             bootstrap.group(ctx.channel().eventLoop())
                     .channel(ctx.channel().getClass())
                     .handler(new ChannelInitializer<SocketChannel>() {

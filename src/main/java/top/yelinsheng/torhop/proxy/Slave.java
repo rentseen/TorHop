@@ -5,10 +5,8 @@ import top.yelinsheng.torhop.router.Router;
 
 public class Slave extends Proxy {
 
-    public Slave(Router router, HeartBeat heartBeat) {
-        super(router, heartBeat);
+    public Slave(Router router) {
+        super(router);
     }
-    public void reset() {
 
-    }
 }

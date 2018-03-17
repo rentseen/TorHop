@@ -5,11 +5,15 @@ import top.yelinsheng.torhop.router.Router;
 
 public abstract class Proxy {
     protected Router router;
-    protected HeartBeat heartBeat;
 
-    public Proxy(Router router, HeartBeat heartBeat) {
+    public Proxy(Router router) {
         this.router = router;
-        this.heartBeat = heartBeat;
     }
-    public abstract void reset();
+    public void setRouter(Router router) {
+        this.router = router;
+    }
+    public void startProxyService() {
+        router.startService();
+        router.registerService();
+    }
 }

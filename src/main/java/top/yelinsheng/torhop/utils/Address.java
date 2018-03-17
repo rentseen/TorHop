@@ -1,8 +1,8 @@
 package top.yelinsheng.torhop.utils;
 
 public class Address {
-    private String host;
-    private int port;
+    private final String host;
+    private final int port;
     public Address(String host, int port) {
         this.host = host;
         this.port = port;
@@ -12,5 +12,9 @@ public class Address {
     }
     public int getPort() {
         return port;
+    }
+    @Override
+    public String toString() {
+        return host+":"+port;
     }
 }
