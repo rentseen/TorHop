@@ -1,34 +1,55 @@
 package top.yelinsheng.torhop.proxy;
 
-import top.yelinsheng.torhop.heartbeat.HeartBeat;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import top.yelinsheng.torhop.CmdOption.SlaveCmdOption;
 import top.yelinsheng.torhop.router.DefaultRouter;
 import top.yelinsheng.torhop.router.Router;
 import top.yelinsheng.torhop.utils.Address;
 
 public class Slave extends Proxy {
+    public static final Logger logger = LogManager.getLogger("Slave");
 
     public Slave(Router router) {
         super(router);
     }
 
     public static void main(String[] args) {
-        final Address slave0ProxyAddress = new Address("127.0.0.1", 9000);
-        final Address slave1ProxyAddress = new Address("127.0.0.1", 9001);
-        final Address slave2ProxyAddress = new Address("127.0.0.1", 9002);
-        final Address slave3ProxyAddress = new Address("127.0.0.1", 9003);
-        final Address leaderAddress = new Address("127.0.0.1", 7000);
-        Router slave0Router = new DefaultRouter(slave0ProxyAddress, null, leaderAddress, "slave");
-        Router slave1Router = new DefaultRouter(slave1ProxyAddress, null, leaderAddress, "slave");
-        Router slave2Router = new DefaultRouter(slave2ProxyAddress, null, leaderAddress, "slave");
-        Router slave3Router = new DefaultRouter(slave3ProxyAddress, null, leaderAddress, "slave");
-        Slave slave0 = new Slave(slave0Router);
-        Slave slave1 = new Slave(slave1Router);
-        Slave slave2 = new Slave(slave2Router);
-        Slave slave3 = new Slave(slave3Router);
-        slave0.startProxyService();
-        slave1.startProxyService();
-        slave2.startProxyService();
-        slave3.startProxyService();
+        SlaveCmdOption option  = new SlaveCmdOption();
+        CmdLineParser parser = new CmdLineParser(option);
+
+        if (args.length == 0){
+            parser.printUsage(System.out);
+            return;
+        }
+        try {
+            parser.parseArgument(args);
+            if(option.leaderAddress==null || option.proxyPort<0) {
+                logger.error("Please specify the leader address and proxy port!");
+                parser.printUsage(System.out);
+            }
+            else {
+                String[] tmp = option.leaderAddress.split(":");
+                if(tmp.length!=2) {
+                    logger.error("leader address format error!");
+                }
+                else {
+                    String leaderHost = tmp[0];
+                    int leaderPort = Integer.parseInt(tmp[1]);
+                    final Address slaveProxyAddress = new Address("127.0.0.1", option.proxyPort);
+                    final Address leaderAddress = new Address(leaderHost, leaderPort);
+                    Router slaveRouter = new DefaultRouter(slaveProxyAddress, null, leaderAddress, "slave");
+                    Slave slave = new Slave(slaveRouter);
+                    slave.startProxyService();
+                }
+            }
+        } catch (CmdLineException cle){
+            System.out.println("Command line error: " + cle.getMessage());
+            parser.printUsage(System.out);
+            return;
+        }
     }
 
 }
