@@ -15,7 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
-import top.yelinsheng.torhop.CmdOption.LeaderCmdOption;
+import top.yelinsheng.torhop.cmdoption.LeaderCmdOption;
 import top.yelinsheng.torhop.handler.LeaderServiceHandler;
 import top.yelinsheng.torhop.router.DefaultRouter;
 import top.yelinsheng.torhop.utils.Address;

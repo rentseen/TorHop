@@ -1,4 +1,4 @@
-package top.yelinsheng.torhop.CmdOption;
+package top.yelinsheng.torhop.cmdoption;
 
 import org.kohsuke.args4j.Option;
 
