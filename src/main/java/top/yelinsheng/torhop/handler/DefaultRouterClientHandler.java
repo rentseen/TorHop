@@ -22,10 +22,10 @@ public class DefaultRouterClientHandler extends ChannelInboundHandlerAdapter {
         HttpHeaders httpHeaders = response.headers();
         if(httpHeaders.contains("torhop-tag")) {
             String s = httpHeaders.get("torhop-tag");
-            httpHeaders.set("torhop-tag", proxyAddress.toString() + "->" + s);
+            httpHeaders.set("torhop-tag", proxyAddress.hashCode() + "->" + s);
         }
         else {
-            httpHeaders.add("torhop-tag", proxyAddress.toString());
+            httpHeaders.add("torhop-tag", proxyAddress.hashCode());
         }
         final ChannelFuture cf = clientChannel.writeAndFlush(msg);
         cf.addListener(ChannelFutureListener.CLOSE);

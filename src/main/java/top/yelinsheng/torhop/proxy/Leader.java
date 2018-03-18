@@ -13,11 +13,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
-import top.yelinsheng.torhop.cmdoption.LeaderCmdOption;
 import top.yelinsheng.torhop.handler.LeaderServiceHandler;
-import top.yelinsheng.torhop.router.DefaultRouter;
 import top.yelinsheng.torhop.utils.Address;
 import top.yelinsheng.torhop.router.Router;
 
@@ -139,35 +135,6 @@ public class Leader extends Slave {
             String msg = "nextHop:"+headAddress+"\n";
             ByteBuf encoded = Unpooled.copiedBuffer(msg.getBytes());
             ctx.writeAndFlush(encoded);
-        }
-    }
-
-    public static void main(String[] args) {
-        LeaderCmdOption option  = new LeaderCmdOption();
-        CmdLineParser parser = new CmdLineParser(option);
-
-        if (args.length == 0){
-            parser.printUsage(System.out);
-            return;
-        }
-        try {
-            parser.parseArgument(args);
-            if(option.leaderPort<0 || option.proxyPort<0) {
-                logger.error("Please specify the leader port and proxy port!");
-                parser.printUsage(System.out);
-            }
-            else {
-                final Address leaderAddress = new Address("127.0.0.1", option.leaderPort);
-                final Address slave4ProxyAddress = new Address("127.0.0.1", option.proxyPort);
-                Router leaderRouter = new DefaultRouter(slave4ProxyAddress, null, leaderAddress, "slave");
-                Leader leader = new Leader(leaderRouter);
-                leader.startLeaderService();
-                leader.startProxyService();
-            }
-        } catch (CmdLineException cle){
-            System.out.println("Command line error: " + cle.getMessage());
-            parser.printUsage(System.out);
-            return;
         }
     }
 }
