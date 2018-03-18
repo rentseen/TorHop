@@ -47,7 +47,7 @@
 
 slave节点可以动态的注册到leader节点上以提供服务，leader会为所有加入的slave生成一条路由路线。gateway节点也可以动态的注册到leader上，为client提供服务。当gateway注册到leader上时，leader会将gateway的下一跳slave节点反馈给它。其中，leader与slave，leader与gateway，gateway与client，之间的关系均是动态且一对多的关系。
 
-效果如下：
+效果如下，代理会对http的头部做出修改，以表示数据经过了它：
 
 ![image](https://github.com/rentseen/torhop/raw/master/img/result.png)
 
