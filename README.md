@@ -47,26 +47,31 @@
 
 slave节点可以动态的注册到leader节点上以提供服务，leader会为所有加入的slave生成一条路由路线。gateway节点也可以动态的注册到leader上，为client提供服务。当gateway注册到leader上时，leader会将gateway的下一跳slave节点反馈给它。其中，leader与slave，leader与gateway，gateway与client，之间的关系均是动态且一对多的关系。
 
-## 编译
+效果如下：
+
+![image](http://github.com/rentseen/torhop/raw/master/img/result.png)
+
+## 使用方法
+### 编译
 ```
 ./make.sh
 ```
-## 启动服务
-### 启动leader服务
+### 启动服务
+#### 启动leader服务
 ```
 ./start.sh -role leader -leaderaddress ip:port -proxyaddress ip:port
 ```
-### 启动slave服务
+#### 启动slave服务
 ```
 ./start.sh -role slave -leaderaddress ip:port -proxyaddress ip:port
 ```
-### 启动gateway服务
+#### 启动gateway服务
 ```
 ./start.sh -role gateway -leaderaddress ip:port -proxyaddress ip:port
 ```
 
-## 客户端
+### 客户端
 可在chrome浏览器上安装SwitchyOmega插件，将gateway配置为代理
 
-## 注意事项
+### 注意事项
 * 如果服务不在本地，请使用公网ip
