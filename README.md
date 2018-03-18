@@ -49,7 +49,7 @@ slave节点可以动态的注册到leader节点上以提供服务，leader会为
 
 效果如下：
 
-![image](http://github.com/rentseen/torhop/raw/master/img/result.png)
+![image](https://github.com/rentseen/torhop/raw/master/img/result.png)
 
 ## 使用方法
 ### 编译
