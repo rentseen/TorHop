@@ -1,4 +1,4 @@
-# TorHop
+# torhop
 此项目模拟了代理服务器的自组织与转发
 
 todo
