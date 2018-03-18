@@ -24,63 +24,50 @@ public class Main {
         }
         try {
             parser.parseArgument(args);
-            if(option.role.equals("leader")) {
-                if(option.leaderPort<0 || option.proxyPort<0) {
-                    logger.error("Please specify the leader port and proxy port!");
-                    parser.printUsage(System.out);
-                }
-                else {
-                    final Address leaderAddress = new Address("127.0.0.1", option.leaderPort);
-                    final Address slave4ProxyAddress = new Address("127.0.0.1", option.proxyPort);
-                    Router leaderRouter = new DefaultRouter(slave4ProxyAddress, null, leaderAddress, "slave");
-                    Leader leader = new Leader(leaderRouter);
-                    leader.startLeaderService();
-                    leader.startProxyService();
-                }
+            if(option.leaderAddress==null || option.proxyAddress==null) {
+                logger.error("Please specify the leader address and proxy address!");
+                parser.printUsage(System.out);
             }
-            else if(option.role.equals("slave")) {
-                if(option.leaderAddress==null || option.proxyPort<0) {
-                    logger.error("Please specify the leader address and proxy port!");
-                    parser.printUsage(System.out);
+            else {
+                String[] leaderList = option.leaderAddress.split(":");
+                String[] proxyList = option.proxyAddress.split(":");
+                if(leaderList.length!=2) {
+                    logger.error("leader address format error!");
+                }
+                else if(proxyList.length!=2) {
+                    logger.error("proxy address format error!");
                 }
                 else {
-                    String[] tmp = option.leaderAddress.split(":");
-                    if(tmp.length!=2) {
-                        logger.error("leader address format error!");
+                    String leaderHost = leaderList[0];
+                    int leaderPort = Integer.parseInt(leaderList[1]);
+                    String proxyHost = proxyList[0];
+                    int proxyPort = Integer.parseInt(proxyList[1]);
+                    if(option.role.equals("leader")) {
+                        final Address leaderAddress = new Address(leaderHost, leaderPort);
+                        final Address slaveProxyAddress = new Address(proxyHost, proxyPort);
+                        Router leaderRouter = new DefaultRouter(slaveProxyAddress, null, leaderAddress, "slave");
+                        Leader leader = new Leader(leaderRouter);
+                        leader.startLeaderService();
+                        leader.startProxyService();
                     }
-                    else {
-                        String leaderHost = tmp[0];
-                        int leaderPort = Integer.parseInt(tmp[1]);
-                        final Address slaveProxyAddress = new Address("127.0.0.1", option.proxyPort);
+                    else if(option.role.equals("slave")) {
+                        final Address slaveProxyAddress = new Address(proxyHost, proxyPort);
                         final Address leaderAddress = new Address(leaderHost, leaderPort);
                         Router slaveRouter = new DefaultRouter(slaveProxyAddress, null, leaderAddress, "slave");
                         Slave slave = new Slave(slaveRouter);
                         slave.startProxyService();
                     }
-                }
-            }
-            else if(option.role.equals("gateway")) {
-                if (option.leaderAddress == null || option.proxyPort < 0) {
-                    logger.error("Please specify the leader address and proxy port!");
-                    parser.printUsage(System.out);
-                } else {
-                    String[] tmp = option.leaderAddress.split(":");
-                    if (tmp.length != 2) {
-                        logger.error("leader address format error!");
-                    }
-                    else {
-                        String leaderHost = tmp[0];
-                        int leaderPort = Integer.parseInt(tmp[1]);
-                        final Address gateWayAddress = new Address("127.0.0.1", option.proxyPort);
+                    else if(option.role.equals("gateway")) {
+                        final Address gateWayAddress = new Address(proxyHost, proxyPort);
                         final Address leaderAddress = new Address(leaderHost, leaderPort);
                         Router gateWayRouter = new DefaultRouter(gateWayAddress, null, leaderAddress, "gateWay");
                         GateWay gateWay = new GateWay(gateWayRouter);
                         gateWay.startProxyService();
                     }
+                    else {
+                        logger.error("role should be: leader, slave, gateway");
+                    }
                 }
-            }
-            else {
-                logger.error("role should be: leader, slave, gateway");
             }
         } catch (CmdLineException cle){
             System.out.println("Command line error: " + cle.getMessage());
