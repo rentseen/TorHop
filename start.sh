@@ -1,1 +1,1 @@
-nohup java -jar target/torhop-1.0.jar "$*" &
+nohup java -jar target/torhop-1.0.jar $* &
