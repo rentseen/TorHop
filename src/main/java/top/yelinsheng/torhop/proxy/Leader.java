@@ -11,6 +11,7 @@ import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import top.yelinsheng.torhop.handler.LeaderServiceHandler;
@@ -18,19 +19,20 @@ import top.yelinsheng.torhop.utils.Address;
 import top.yelinsheng.torhop.router.Router;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class Leader extends Slave {
     public static final Logger logger = LogManager.getLogger("Leader");
     private List<Address> slaveList;
-    private Map<Address, ChannelHandlerContext> slaveChannelMap;
+    private Map<Address, Channel> slaveChannelMap;
     private List<Address> gateWayList;
-    private Map<Address, ChannelHandlerContext> gateWayChannelMap;
+    private Map<Address, Channel> gateWayChannelMap;
     public Leader(Router router) {
         super(router);
         slaveList = new ArrayList<Address>();
-        slaveChannelMap = new HashMap<Address, ChannelHandlerContext>();
+        slaveChannelMap = new HashMap<Address, Channel>();
         gateWayList = new ArrayList<Address>();
-        gateWayChannelMap = new HashMap<Address, ChannelHandlerContext>();
+        gateWayChannelMap = new HashMap<Address, Channel>();
     }
     public void startLeaderService() {
         final Leader leader = this;
@@ -50,6 +52,7 @@ public class Leader extends Slave {
                                 protected void initChannel(SocketChannel ch) throws Exception {
                                     ChannelPipeline pipeline = ch.pipeline();
                                     //解决粘包问题
+                                    pipeline.addLast(new IdleStateHandler(5, 0, 0, TimeUnit.SECONDS));
                                     pipeline.addLast(new LineBasedFrameDecoder(1024));
                                     pipeline.addLast(new StringDecoder());
                                     pipeline.addLast("handler", new LeaderServiceHandler(leader));
@@ -66,9 +69,9 @@ public class Leader extends Slave {
             }
         }.start();
     }
-    public synchronized void addSlave(Address address, ChannelHandlerContext ctx) {
+    public synchronized void addSlave(Address address, Channel ch) {
         slaveList.add(address);
-        slaveChannelMap.put(address, ctx);
+        slaveChannelMap.put(address, ch);
         generateRoute();
     }
     public synchronized void removeSlave(Address address) {
@@ -76,11 +79,11 @@ public class Leader extends Slave {
         slaveChannelMap.remove(address);
         generateRoute();
     }
-    public synchronized void removeSlave(ChannelHandlerContext ctx) {
-        Iterator<Map.Entry<Address, ChannelHandlerContext>> iterator = slaveChannelMap.entrySet().iterator();
+    public synchronized void removeSlave(Channel ch) {
+        Iterator<Map.Entry<Address, Channel>> iterator = slaveChannelMap.entrySet().iterator();
         while(iterator.hasNext()) {
-            Map.Entry<Address, ChannelHandlerContext> entry = iterator.next();
-            if(entry.getValue()==ctx) {
+            Map.Entry<Address, Channel> entry = iterator.next();
+            if(entry.getValue()==ch) {
                 Address address = entry.getKey();
                 iterator.remove();
                 slaveList.remove(address);
@@ -89,14 +92,14 @@ public class Leader extends Slave {
             }
         }
     }
-    public synchronized void addGateWay(Address address, ChannelHandlerContext ctx) {
+    public synchronized void addGateWay(Address address, Channel ch) {
         gateWayList.add(address);
-        gateWayChannelMap.put(address, ctx);
+        gateWayChannelMap.put(address, ch);
         if(slaveList.size()>0) {
             Address headAddress = slaveList.get(0);
             String msg = "nextHop:"+headAddress+"\n";
             ByteBuf encoded = Unpooled.copiedBuffer(msg.getBytes());
-            ctx.writeAndFlush(encoded);
+            ch.writeAndFlush(encoded);
         }
         logger.error("gateWay list: " + gateWayList);
     }
@@ -105,11 +108,11 @@ public class Leader extends Slave {
         gateWayChannelMap.remove(address);
         logger.error("gateWay list: " + gateWayList);
     }
-    public synchronized void removeGateWay(ChannelHandlerContext ctx) {
-        Iterator<Map.Entry<Address, ChannelHandlerContext>> iterator = gateWayChannelMap.entrySet().iterator();
+    public synchronized void removeGateWay(Channel ch) {
+        Iterator<Map.Entry<Address, Channel>> iterator = gateWayChannelMap.entrySet().iterator();
         while(iterator.hasNext()) {
-            Map.Entry<Address, ChannelHandlerContext> entry = iterator.next();
-            if(entry.getValue()==ctx) {
+            Map.Entry<Address, Channel> entry = iterator.next();
+            if(entry.getValue()==ch) {
                 Address address = entry.getKey();
                 iterator.remove();
                 gateWayList.remove(address);
@@ -122,19 +125,19 @@ public class Leader extends Slave {
         Collections.shuffle(slaveList);
         logger.error("slave list after shuffle: " + slaveList);
         for(int i=0; i<slaveList.size()-1; i++) {
-            ChannelHandlerContext ctx = slaveChannelMap.get(slaveList.get(i));
+            Channel ch = slaveChannelMap.get(slaveList.get(i));
             String msg = "nextHop:"+slaveList.get(i+1)+"\n";
             ByteBuf encoded = Unpooled.copiedBuffer(msg.getBytes());
-            ctx.writeAndFlush(encoded);
+            ch.writeAndFlush(encoded);
         }
         slaveChannelMap.get(slaveList.get(slaveList.size()-1)).
                 writeAndFlush(Unpooled.copiedBuffer("nextHop:null:null\n".getBytes()));
         Address headAddress = slaveList.get(0);
         for(int i=0; i<gateWayList.size(); i++) {
-            ChannelHandlerContext ctx = gateWayChannelMap.get(gateWayList.get(i));
+            Channel ch = gateWayChannelMap.get(gateWayList.get(i));
             String msg = "nextHop:"+headAddress+"\n";
             ByteBuf encoded = Unpooled.copiedBuffer(msg.getBytes());
-            ctx.writeAndFlush(encoded);
+            ch.writeAndFlush(encoded);
         }
     }
 }

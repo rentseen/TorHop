@@ -18,8 +18,8 @@ public class LeaderServiceHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        leader.removeSlave(ctx);
-        leader.removeGateWay(ctx);
+        leader.removeSlave(ctx.channel());
+        leader.removeGateWay(ctx.channel());
     }
 
     //接收leader的更新数据
@@ -33,10 +33,10 @@ public class LeaderServiceHandler extends ChannelInboundHandlerAdapter {
                 String role = tmp[1];
                 Address address = new Address(tmp[2], Integer.parseInt(tmp[3]));
                 if(role.equals("gateWay")) {
-                    leader.addGateWay(address, ctx);
+                    leader.addGateWay(address, ctx.channel());
                 }
                 else if(role.equals("slave")) {
-                    leader.addSlave(address, ctx);
+                    leader.addSlave(address, ctx.channel());
                 }
 
             }
