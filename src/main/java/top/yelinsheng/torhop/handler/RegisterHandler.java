@@ -4,6 +4,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import top.yelinsheng.torhop.router.Router;
@@ -14,6 +16,28 @@ public class RegisterHandler extends ChannelInboundHandlerAdapter {
     private Router router;
     public RegisterHandler(Router router) {
         this.router = router;
+    }
+
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        router.registerService();
+    }
+
+    //heartbeat
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt instanceof IdleStateEvent){
+            IdleStateEvent event = (IdleStateEvent)evt;
+            if (event.state()== IdleState.WRITER_IDLE) {
+                //logger.error("send heartbeat");
+                ByteBuf encoded = Unpooled.copiedBuffer("heartbeat\n".getBytes());
+                ctx.channel().writeAndFlush(encoded);
+            }
+            else if(event.state() == IdleState.READER_IDLE) {
+                logger.error("ERROR: channel failed and shutdown");
+                ctx.channel().close();
+                router.registerService();
+            }
+        }
     }
 
     //将自己注册到leader服务器
@@ -37,6 +61,9 @@ public class RegisterHandler extends ChannelInboundHandlerAdapter {
                 }
                 router.setNextHop(address);
                 logger.error(router.getProxyAddress()+" next hop: " + address);
+            }
+            else if(tmp[0].equals("heartbeatACK")) {
+                //logger.error("get heartbeat ack");
             }
         }
     }

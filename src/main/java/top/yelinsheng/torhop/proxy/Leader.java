@@ -52,7 +52,7 @@ public class Leader extends Slave {
                                 protected void initChannel(SocketChannel ch) throws Exception {
                                     ChannelPipeline pipeline = ch.pipeline();
                                     //解决粘包问题
-                                    pipeline.addLast(new IdleStateHandler(5, 0, 0, TimeUnit.SECONDS));
+                                    pipeline.addLast(new IdleStateHandler(0, 35, 0, TimeUnit.SECONDS));
                                     pipeline.addLast(new LineBasedFrameDecoder(1024));
                                     pipeline.addLast(new StringDecoder());
                                     pipeline.addLast("handler", new LeaderServiceHandler(leader));
@@ -122,6 +122,8 @@ public class Leader extends Slave {
         }
     }
     public synchronized void generateRoute() {
+        if(slaveList.size()<=0)
+            return;
         Collections.shuffle(slaveList);
         logger.error("slave list after shuffle: " + slaveList);
         for(int i=0; i<slaveList.size()-1; i++) {

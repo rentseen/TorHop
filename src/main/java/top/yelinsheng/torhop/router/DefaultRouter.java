@@ -38,7 +38,6 @@ public class DefaultRouter extends Router {
                 registerConnect();
             }
         }.start();
-
     }
 
     public void startService() {
@@ -89,7 +88,7 @@ public class DefaultRouter extends Router {
                         public void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline pipeline = ch.pipeline();
                             //解决粘包问题
-                            pipeline.addLast(new IdleStateHandler(30, 0, 0, TimeUnit.SECONDS));
+                            pipeline.addLast(new IdleStateHandler(33, 30, 0, TimeUnit.SECONDS));
                             pipeline.addLast(new LineBasedFrameDecoder(1024));
                             pipeline.addLast(new StringDecoder());
                             pipeline.addLast(registerHandler);
@@ -116,7 +115,7 @@ class RegisterConnectionListener implements ChannelFutureListener {
                 public void run() {
                     router.registerConnect();
                 }
-            }, 1L, TimeUnit.SECONDS);
+            }, 10L, TimeUnit.SECONDS);
         }
         else {
             DefaultRouter.logger.error(router.getProxyAddress().toString() + " register to leader successfully");
