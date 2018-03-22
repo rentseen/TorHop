@@ -2,21 +2,15 @@ package top.yelinsheng.torhop.router;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,7 +45,6 @@ public class DefaultRouter extends Router {
                             .channel(NioServerSocketChannel.class)
                             .option(ChannelOption.SO_BACKLOG, 100)
                             .option(ChannelOption.TCP_NODELAY, true)
-                            .handler(new LoggingHandler(LogLevel.INFO))
                             .childHandler(new ChannelInitializer<SocketChannel>(){
                                 @Override
                                 protected void initChannel(SocketChannel ch) throws Exception {
