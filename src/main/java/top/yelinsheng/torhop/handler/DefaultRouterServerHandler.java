@@ -25,6 +25,8 @@ public class DefaultRouterServerHandler extends ChannelInboundHandlerAdapter {
                 //此节点为出口
 
                 String[] tmp = request.headers().get("host").split(":");
+                if(tmp.length==0)
+                    return;
                 host = tmp[0];
                 port = 80;
                 if (tmp.length > 1) {
