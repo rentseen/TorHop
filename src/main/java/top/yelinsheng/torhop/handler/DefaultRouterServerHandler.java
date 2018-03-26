@@ -4,11 +4,15 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import top.yelinsheng.torhop.utils.Address;
 
 public class DefaultRouterServerHandler extends ChannelInboundHandlerAdapter {
     private Address nextHopAddress;
     private final Address proxyAddress;
+    public static final Logger logger = LogManager.getLogger("DefaultRouterServerHandler");
+
     public DefaultRouterServerHandler(Address nextHopAddress, Address proxyAddress) {
         this.nextHopAddress = nextHopAddress;
         this.proxyAddress = proxyAddress;
@@ -25,8 +29,10 @@ public class DefaultRouterServerHandler extends ChannelInboundHandlerAdapter {
                 //此节点为出口
 
                 String[] tmp = request.headers().get("host").split(":");
-                if(tmp.length==0)
+                if(tmp==null || tmp.length==0) {
+                    logger.error(request.headers().toString());
                     return;
+                }
                 host = tmp[0];
                 port = 80;
                 if (tmp.length > 1) {
